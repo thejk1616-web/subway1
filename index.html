@@ -2,7 +2,7 @@
 <html lang="am">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>JK_RUN - Endless Runner</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -13,31 +13,206 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
             min-height: 100vh;
             overflow: hidden;
-            touch-action: none;
         }
         #score-board {
-            font-size: 24px;
+            font-size: 26px;
             font-weight: 900;
             color: #00f2fe;
-            margin-top: 20px;
+            margin-bottom: 10px;
             text-shadow: 0 0 10px #00f2fe;
         }
+        /* የጨዋታው ሜዳ በስልክ ላይ በግልጽ እንዲታይ የተስተካከለ */
         #game-container {
             position: relative;
-            width: 100vw;
-            max-width: 480px;
-            height: 60vh;
-            background: linear-gradient(180deg, #0b132b, #111c44);
-            border-bottom: 5px solid #00f2fe; /* የባቡር ሀዲድ */
-            margin-top: 30px;
+            width: 90vw;
+            max-width: 400px;
+            height: 350px;
+            background: #0b132b;
+            border: 2px solid #1c2541;
+            border-bottom: 6px solid #00f2fe; /* ሀዲድ */
             overflow: hidden;
             border-radius: 12px;
+            box-shadow: 0 0 20px rgba(0, 242, 254, 0.2);
         }
         #player {
             position: absolute;
             bottom: 0;
-            left: 50px;
-            width: 40px;
-            height: 40
+            left: 30px;
+            width: 35px;
+            height: 35px;
+            background: #00f2fe;
+            border-radius: 6px;
+            box-shadow: 0 0 15px #00f2fe;
+            transition: bottom 0.05s linear;
+        }
+        .obstacle {
+            position: absolute;
+            bottom: 0;
+            width: 25px;
+            height: 45px;
+            background: #ff7b72;
+            border-radius: 4px;
+            box-shadow: 0 0 10px #ff7b72;
+        }
+        #game-over-screen {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(6, 9, 19, 0.95);
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+        .restart-btn {
+            background: #ff7b72;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 8px;
+            margin-top: 20px;
+            cursor: pointer;
+            box-shadow: 0 0 15px #ff7b72;
+        }
+        #instructions {
+            margin-top: 15px;
+            color: #475569;
+            font-weight: bold;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="score-board">SCORE: <span id="score">0</span></div>
+    
+    <div id="game-container" onclick="jump()">
+        <div id="player"></div>
+        
+        <div id="game-over-screen">
+            <h1 style="color: #ff7b72; font-size: 32px; text-shadow: 0 0 10px #ff7b72;">GAME OVER</h1>
+            <p id="final-score" style="font-size: 20px; margin-top: 10px;"></p>
+            <button class="restart-btn" onclick="event.stopPropagation(); resetGame();">🔄 ድጋሚ ጀምር</button>
+        </div>
+    </div>
+
+    <div id="instructions">👇 ለመዝለል ሳጥኑን ዝም ብለህ ንካው (Tap) 👇</div>
+
+<script>
+    const container = document.getElementById('game-container');
+    const player = document.getElementById('player');
+    const scoreDisplay = document.getElementById('score');
+    const gameOverScreen = document.getElementById('game-over-screen');
+    const finalScoreDisplay = document.getElementById('final-score');
+
+    let score = 0;
+    let gameOver = false;
+    let isJumping = false;
+    let playerY = 0;
+    let jumpSpeed = 0;
+    const gravity = 0.6;
+
+    let obstacles = [];
+    let obstacleSpeed = 4;
+    let spawnTimer = 0;
+
+    // ቀላል የመዝለያ ፈንክሽን
+    function jump() {
+        if (!isJumping && !gameOver) {
+            isJumping = true;
+            jumpSpeed = -11; // የዝላይ ቁመት
+        }
+    }
+
+    function gameLoop() {
+        if (gameOver) return;
+
+        // የዝላይ ስሌት
+        if (isJumping) {
+            jumpSpeed += gravity;
+            playerY -= jumpSpeed;
+
+            if (playerY <= 0) {
+                playerY = 0;
+                isJumping = false;
+                jumpSpeed = 0;
+            }
+            player.style.bottom = playerY + 'px';
+        }
+
+        // እንቅፋት ማውጫ
+        spawnTimer++;
+        if (spawnTimer > 90) { 
+            createObstacle();
+            spawnTimer = 0;
+        }
+
+        // እንቅፋቶችን ማንቀሳቀስ
+        for (let i = obstacles.length - 1; i >= 0; i--) {
+            let obs = obstacles[i];
+            let currentLeft = parseFloat(obs.style.left) || 0;
+            currentLeft -= obstacleSpeed;
+            obs.style.left = currentLeft + 'px';
+
+            // የግርጭት ሂሳብ (Collision Check)
+            if (currentLeft > 30 && currentLeft < 65 && playerY < 45) {
+                endGame();
+                return;
+            }
+
+            // ካለፈ በኋላ ነጥብ መደመር
+            if (currentLeft < -30) {
+                obs.remove();
+                obstacles.splice(i, 1);
+                score++;
+                scoreDisplay.innerText = score;
+
+                if (score % 5 === 0) {
+                    obstacleSpeed += 0.4; // ፍጥነት መጨመሪያ
+                }
+            }
+        }
+
+        requestAnimationFrame(gameLoop);
+    }
+
+    function createObstacle() {
+        const obs = document.createElement('div');
+        obs.className = 'obstacle';
+        obs.style.left = (container.clientWidth || 400) + 'px';
+        container.appendChild(obs);
+        obstacles.push(obs);
+    }
+
+    function endGame() {
+        gameOver = true;
+        finalScoreDisplay.innerText = "የመጨረሻ ውጤትህ: " + score;
+        gameOverScreen.style.display = 'flex';
+    }
+
+    function resetGame() {
+        obstacles.forEach(obs => obs.remove());
+        obstacles = [];
+        score = 0;
+        scoreDisplay.innerText = score;
+        obstacleSpeed = 4;
+        spawnTimer = 0;
+        playerY = 0;
+        player.style.bottom = '0px';
+        isJumping = false;
+        gameOver = false;
+        gameOverScreen.style.display = 'none';
+        requestAnimationFrame(gameLoop);
+    }
+
+    // ጨዋታውን ለመጀመር
+    resetGame();
+</script>
+
+</body>
+</html>
