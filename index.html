@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="am">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JK_RUN - Endless Runner</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background-color: #060913;
+            color: #ffffff;
+            font-family: 'Segoe UI', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+            touch-action: none;
+        }
+        #score-board {
+            font-size: 24px;
+            font-weight: 900;
+            color: #00f2fe;
+            margin-top: 20px;
+            text-shadow: 0 0 10px #00f2fe;
+        }
+        #game-container {
+            position: relative;
+            width: 100vw;
+            max-width: 480px;
+            height: 60vh;
+            background: linear-gradient(180deg, #0b132b, #111c44);
+            border-bottom: 5px solid #00f2fe; /* የባቡር ሀዲድ */
+            margin-top: 30px;
+            overflow: hidden;
+            border-radius: 12px;
+        }
+        #player {
+            position: absolute;
+            bottom: 0;
+            left: 50px;
+            width: 40px;
+            height: 40
