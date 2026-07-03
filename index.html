@@ -1,15 +1,15 @@
 <!DOCTYPE html>
-<html lang="am">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>JK_DINO - Cyber Dinosaur</title>
+    <title>Chrome Dino Game</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            background-color: #060913;
-            color: #ffffff;
-            font-family: 'Segoe UI', Roboto, sans-serif;
+            background-color: #f7f7f7; /* የChrome ነጭ ገጽ */
+            color: #535353;
+            font-family: Arial, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -18,98 +18,102 @@
             overflow: hidden;
         }
         #score-board {
-            font-size: 28px;
-            font-weight: 900;
-            color: #00f2fe;
-            margin-bottom: 15px;
-            text-shadow: 0 0 15px #00f2fe;
-            letter-spacing: 2px;
+            font-size: 20px;
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+            margin-bottom: 10px;
+            align-self: flex-end;
+            max-width: 400px;
+            width: 90vw;
+            text-align: right;
         }
-        
-        /* High Quality Cyberpunk Game Field */
+        /* የChrome ስታይል ሜዳ */
         #game-container {
             position: relative;
-            width: 92vw;
-            max-width: 440px;
-            height: 320px;
-            background: linear-gradient(180deg, #0b132b 0%, #060913 100%);
-            border: 2px solid rgba(0, 242, 254, 0.3);
-            border-bottom: 6px solid #00f2fe; /* Glowing Ground */
+            width: 90vw;
+            max-width: 400px;
+            height: 200px;
+            background-color: #f7f7f7;
+            border-bottom: 2px solid #535353; /* መሬት መስመር */
             overflow: hidden;
-            border-radius: 16px;
-            box-shadow: 0 0 30px rgba(0, 242, 254, 0.15);
         }
-        
-        /* Neon Dinosaur */
+        /* ዳይኖሰር 🦕 */
         #player {
             position: absolute;
             bottom: 0;
-            left: 40px;
-            font-size: 38px;
-            width: 45px;
-            height: 45px;
+            left: 30px;
+            font-size: 30px;
+            width: 35px;
+            height: 35px;
             display: flex;
             justify-content: center;
             align-items: center;
-            filter: drop-shadow(0 0 8px #00f2fe);
             z-index: 5;
         }
-
-        /* Obstacles Style */
+        /* እንቅፋቶች (Cactus ወይም Bird) */
         .obstacle {
             position: absolute;
-            font-size: 30px;
+            font-size: 26px;
             display: flex;
             justify-content: center;
             align-items: center;
-            filter: drop-shadow(0 0 8px #ff7b72);
         }
-
-        /* UI Screens */
+        /* Game Over ገጽ */
         #game-over-screen {
             display: none;
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(6, 9, 19, 0.95);
+            background: rgba(247, 247, 247, 0.8);
             flex-direction: column;
             justify-content: center;
             align-items: center;
             z-index: 10;
         }
+        #game-over-text {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 24px;
+            font-weight: bold;
+            letter-spacing: 3px;
+            margin-bottom: 15px;
+        }
         .restart-btn {
-            background: linear-gradient(135deg, #ff7b72, #ff443a);
-            color: white;
+            background: none;
             border: none;
-            padding: 14px 30px;
-            font-size: 18px;
-            font-weight: bold;
-            border-radius: 10px;
-            margin-top: 20px;
+            font-size: 35px;
             cursor: pointer;
-            box-shadow: 0 0 20px rgba(255, 123, 114, 0.4);
-            transition: 0.2s;
+            color: #535353;
         }
-        .restart-btn:active {
-            transform: scale(0.95);
-        }
-        #instructions {
-            margin-top: 20px;
-            color: #475569;
-            font-weight: bold;
-            font-size: 14px;
-            text-align: center;
-            line-height: 1.6;
-        }
-        .highlight { color: #ff7b72; }
-        .highlight-blue { color: #00f2fe; }
     </style>
 </head>
 <body>
 
-    <div id="score-board">SCORE: <span id="score">0</span></div>
+    <div id="score-board">HI 00000 <span id="score">00000</span></div>
     
     <div id="game-container" onclick="jump()">
         <div id="player">🦕</div>
         
         <div id="game-over-screen">
-            <h1 style="color: #ff7b72
+            <div id="game-over-text">G A M E  O V E R</div>
+            <button class="restart-btn" onclick="event.stopPropagation(); resetGame();">🔄</button>
+        </div>
+    </div>
+
+<script>
+    const container = document.getElementById('game-container');
+    const player = document.getElementById('player');
+    const scoreDisplay = document.getElementById('score');
+    const gameOverScreen = document.getElementById('game-over-screen');
+
+    let score = 0;
+    let gameOver = false;
+    let isJumping = false;
+    let playerY = 0;
+    let jumpSpeed = 0;
+    const gravity = 0.6; // ስበት
+
+    let obstacles = [];
+    let obstacleSpeed = 4;
+    let spawnTimer = 0;
+
+    function jump() {
+        if (!is
