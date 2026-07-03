@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Chrome Dino Game</title>
+    <title>Chrome Dino Game - Desert Mood</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            background-color: #f7f7f7; /* የChrome ነጭ ገጽ */
+            background-color: #f7f7f7;
             color: #535353;
             font-family: Arial, sans-serif;
             display: flex;
@@ -22,48 +22,80 @@
             font-family: 'Courier New', Courier, monospace;
             font-weight: bold;
             margin-bottom: 10px;
-            align-self: flex-end;
             max-width: 400px;
             width: 90vw;
             text-align: right;
         }
-        /* የChrome ስታይል ሜዳ */
+        
         #game-container {
             position: relative;
             width: 90vw;
             max-width: 400px;
-            height: 200px;
+            height: 220px;
             background-color: #f7f7f7;
-            border-bottom: 2px solid #535353; /* መሬት መስመር */
+            border-bottom: 2px solid #535353;
             overflow: hidden;
         }
-        /* ዳይኖሰር 🦕 */
+
+        /* ☀️ Mood Elements */
+        .sun {
+            position: absolute;
+            top: 20px;
+            right: 40px;
+            font-size: 28px;
+            opacity: 0.7;
+        }
+        .cloud {
+            position: absolute;
+            top: 30px;
+            left: 50px;
+            font-size: 20px;
+            opacity: 0.4;
+        }
+        .mountains {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            font-size: 32px;
+            opacity: 0.25;
+            letter-spacing: -5px;
+            white-space: nowrap;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* 🦕 ፊቱን ወደ ቀኝ ያዞረው ዳይኖሰር */
         #player {
             position: absolute;
             bottom: 0;
-            left: 30px;
-            font-size: 30px;
+            left: 40px;
+            font-size: 32px;
             width: 35px;
             height: 35px;
             display: flex;
             justify-content: center;
             align-items: center;
             z-index: 5;
+            transform: scaleX(-1); /* 👈 ይህ ፊቱን ወደ ቀኝ ያዞረዋል! */
         }
-        /* እንቅፋቶች (Cactus ወይም Bird) */
+
+        /* 🌵 Obstacles */
         .obstacle {
             position: absolute;
             font-size: 26px;
             display: flex;
             justify-content: center;
             align-items: center;
+            z-index: 4;
         }
-        /* Game Over ገጽ */
+
+        /* Game Over */
         #game-over-screen {
             display: none;
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(247, 247, 247, 0.8);
+            background: rgba(247, 247, 247, 0.85);
             flex-direction: column;
             justify-content: center;
             align-items: center;
@@ -83,6 +115,13 @@
             cursor: pointer;
             color: #535353;
         }
+        #instructions {
+            margin-top: 15px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 13px;
+            color: #777;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -90,6 +129,10 @@
     <div id="score-board">HI 00000 <span id="score">00000</span></div>
     
     <div id="game-container" onclick="jump()">
+        <div class="sun">☀️</div>
+        <div class="cloud">☁️ &nbsp; &nbsp; ☁️</div>
+        <div class="mountains">⛰️⛰️⛰️⛰️⛰️⛰️⛰️⛰️⛰️⛰️</div>
+
         <div id="player">🦕</div>
         
         <div id="game-over-screen">
@@ -97,6 +140,8 @@
             <button class="restart-btn" onclick="event.stopPropagation(); resetGame();">🔄</button>
         </div>
     </div>
+
+    <div id="instructions">TAP SCREEN TO JUMP</div>
 
 <script>
     const container = document.getElementById('game-container');
@@ -109,11 +154,118 @@
     let isJumping = false;
     let playerY = 0;
     let jumpSpeed = 0;
-    const gravity = 0.6; // ስበት
+    const gravity = 0.6;
 
     let obstacles = [];
     let obstacleSpeed = 4;
     let spawnTimer = 0;
 
     function jump() {
-        if (!is
+        if (!isJumping && !gameOver) {
+            isJumping = true;
+            jumpSpeed = -11;
+        }
+    }
+
+    function gameLoop() {
+        if (gameOver) return;
+
+        if (isJumping) {
+            jumpSpeed += gravity;
+            playerY -= jumpSpeed;
+
+            if (playerY <= 0) {
+                playerY = 0;
+                isJumping = false;
+                jumpSpeed = 0;
+            }
+            player.style.bottom = playerY + 'px';
+        }
+
+        spawnTimer++;
+        if (spawnTimer > 85) { 
+            createObstacle();
+            spawnTimer = 0;
+        }
+
+        for (let i = obstacles.length - 1; i >= 0; i--) {
+            let obs = obstacles[i];
+            let currentLeft = parseFloat(obs.style.left) || 0;
+            currentLeft -= obstacleSpeed;
+            obs.style.left = currentLeft + 'px';
+
+            let obsType = obs.dataset.type;
+
+            if (currentLeft > 25 && currentLeft < 65) {
+                if (obsType === 'ground' && playerY < 25) {
+                    endGame();
+                    return;
+                } else if (obsType === 'sky' && playerY > 30) {
+                    endGame();
+                    return;
+                }
+            }
+
+            if (currentLeft < -30) {
+                obs.remove();
+                obstacles.splice(i, 1);
+                score++;
+                scoreDisplay.innerText = String(score).padStart(5, '0');
+
+                if (score % 5 === 0) {
+                    obstacleSpeed += 0.5;
+                }
+            }
+        }
+
+        requestAnimationFrame(gameLoop);
+    }
+
+    function createObstacle() {
+        const obs = document.createElement('div');
+        obs.className = 'obstacle';
+        
+        const isSky = Math.random() > 0.5;
+        
+        if (isSky) {
+            obs.innerText = '🦅';
+            obs.style.bottom = '75px'; 
+            obs.dataset.type = 'sky';
+        } else {
+            obs.innerText = '🌵';
+            obs.style.bottom = '0px';
+            obs.dataset.type = 'ground';
+        }
+        
+        obs.style.left = (container.clientWidth || 400) + 'px';
+        container.appendChild(obs);
+        obstacles.push(obs);
+    }
+
+    function endGame() {
+        gameOver = true;
+        gameOverScreen.style.display = 'flex';
+    }
+
+    function resetGame() {
+        obstacles.forEach(obs => obs.remove());
+        obstacles = [];
+        score = 0;
+        scoreDisplay.innerText = "00000";
+        obstacleSpeed = 4;
+        spawnTimer = 0;
+        playerY = 0;
+        player.style.bottom = '0px';
+        isJumping = false;
+        gameOver = false;
+        gameOverScreen.style.display = 'none';
+    }
+
+    resetGame();
+    setTimeout(() => {
+        requestAnimationFrame(gameLoop);
+    }, 200);
+</script>
+
+</body>
+</html>
